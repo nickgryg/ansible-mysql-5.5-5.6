@@ -114,16 +114,6 @@
   notify:
     - Restart rsyslog service
 
-- name: Add mysql path to the system
-  become: yes
-  lineinfile:
-    path: /etc/environment
-    state: present
-    backrefs: yes
-    regexp: 'PATH=(["]*)((?!.*?{{ mysql_bin_path }}).*?)(["]*)$'
-    line: 'PATH=\1\2:{{ mysql_bin_path }}\3'
-  when: need_to_install_mysql is failed
-
 - name: Add mysql init script
   become: yes
   copy:
@@ -137,6 +127,16 @@
 - name: Add mysql init script to services
   become: yes
   command: update-rc.d -f mysql.server defaults
+  when: need_to_install_mysql is failed
+
+- name: Add mysql path to the system
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    state: present
+    backrefs: yes
+    regexp: 'PATH=(["]*)((?!.*?{{ mysql_bin_path }}).*?)(["]*)$'
+    line: 'PATH=\1\2:{{ mysql_bin_path }}\3'
   when: need_to_install_mysql is failed
 
 - name: Start mysql-server if it is not started
