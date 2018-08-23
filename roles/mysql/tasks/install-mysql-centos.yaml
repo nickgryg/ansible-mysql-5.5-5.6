@@ -13,7 +13,6 @@
     owner: root
     group: root
     mode: 0644
-  when: ansible_os_family == "RedHat"
 
 - name: Add GPG mysql key
   become: yes
@@ -23,16 +22,12 @@
     owner: root
     group: root
     mode: 0644
-  when: ansible_os_family == "RedHat"
 
-- name: Install mysql-server
+- name: Install mysql
   become: yes
   yum:
-    name: "{{ item }}"
+    name: mysql-server
     state: present
-  with_items:
-    - mysql-server
-  when: ansible_os_family == "RedHat"
 
 - name: Start mysql-server if it is not started
   become: yes
