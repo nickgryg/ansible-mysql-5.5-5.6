@@ -1,0 +1,13 @@
+---
+- name: test_role
+  hosts: localhost
+  connection: local
+  gather_facts: True
+  max_fail_percentage: 0
+  roles:
+    - {
+        role: mysql,
+        version: 5.5,
+        root_password: 'mysuperpassword',
+        mysql_databases: [{ name: 'mydb1' }, { name: 'mydb2' }],
+      }

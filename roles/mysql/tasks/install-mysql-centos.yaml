@@ -1,0 +1,41 @@
+---
+- name: Install required packages
+  become: yes
+  yum:
+    name: MySQL-python
+    state: present
+
+- name: Add mysql-community.repo
+  become: yes
+  template:
+    src: mysql-community.repo.j2
+    dest: /etc/yum.repos.d/mysql-community.repo
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_os_family == "RedHat"
+
+- name: Add GPG mysql key
+  become: yes
+  copy:
+    src: RPM-GPG-KEY-mysql
+    dest: /etc/pki/rpm-gpg/RPM-GPG-KEY-mysql
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_os_family == "RedHat"
+
+- name: Install mysql-server
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mysql-server
+  when: ansible_os_family == "RedHat"
+
+- name: Start mysql-server if it is not started
+  become: yes
+  service:
+    name: mysqld
+    state: started

@@ -1,0 +1,8 @@
+---
+- include_tasks: install-mysql-centos.yaml
+  when: ansible_distribution == "CentOS"
+
+- include_tasks: install-mysql-ubuntu.yaml
+  when: ansible_distribution == "Ubuntu"
+
+- include_tasks: post-tasks.yaml

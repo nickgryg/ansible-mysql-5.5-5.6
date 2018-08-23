@@ -1,0 +1,25 @@
+---
+- name: Update MySQL root password for all root accounts
+  become: yes
+  mysql_user:
+    name: root
+    host_all: yes
+    password: "{{ root_password }}"
+    check_implicit_admin: yes
+    state: present
+
+- name: Create/update .my.cnf for root user
+  become: yes
+  template:
+    src: .my.cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Create databases
+  become: yes
+  mysql_db:
+    name: "{{ item.name }}"
+    state: present
+  with_items: "{{ mysql_databases }}"

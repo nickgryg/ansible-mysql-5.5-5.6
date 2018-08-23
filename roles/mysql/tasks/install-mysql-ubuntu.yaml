@@ -1,0 +1,146 @@
+---
+- name: Install required packages  
+  become: yes
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - libaio1
+    - python-mysqldb
+    - python3-mysqldb
+
+- name: Check if mysql is already installed
+  shell: mysql --version
+  register: need_to_install_mysql
+  ignore_errors: True
+
+- name: Download mysql archive
+  get_url:
+    url: https://dev.mysql.com/get/Downloads/MySQL-{{ version }}/mysql-{{ full_version }}.tar.gz
+    dest: /tmp/mysql-{{ version }}.tar.gz
+    checksum: md5:{{ checksum }}
+  when: need_to_install_mysql is failed
+
+- name: Add mysql group
+  become: yes
+  group:
+    name: mysql
+    state: present
+  when: need_to_install_mysql is failed
+
+- name: Add mysql user
+  become: yes
+  user:
+    name: mysql
+    group: mysql
+    shell: /bin/false
+  when: need_to_install_mysql is failed
+
+- name: Extract mysql archive into /usr/local folder
+  become: yes
+  unarchive:
+    remote_src: yes
+    src: /tmp/mysql-{{ version }}.tar.gz
+    dest: /usr/local
+  when: need_to_install_mysql is failed
+
+- name: Create symlink to mysql folder
+  become: yes
+  file:
+    src: /usr/local/mysql-{{ full_version }}
+    path: /usr/local/mysql
+    owner: root
+    group: root
+    state: link
+  when: need_to_install_mysql is failed
+
+- name: Change owner to mysql on mysql folder
+  become: yes
+  file:
+    recurse: yes
+    path: /usr/local/mysql
+    owner: mysql
+    group: mysql
+    state: directory
+  when: need_to_install_mysql is failed
+
+- name: Execute mysql installation script
+  become: yes
+  shell: cd /usr/local/mysql && scripts/mysql_install_db --user=mysql
+  when: need_to_install_mysql is failed
+
+- name: Change owner to root on mysql folder
+  become: yes
+  file:
+    recurse: yes
+    path: /usr/local/mysql
+    owner: root
+    state: directory
+  when: need_to_install_mysql is failed
+
+- name: Change owner to mysql on data folder
+  become: yes
+  file:
+    recurse: yes
+    path: /usr/local/mysql/data
+    owner: mysql
+    state: directory
+  when: need_to_install_mysql is failed
+
+- name: Create /var/run/mysqld folder
+  become: yes
+  file:
+    path: /var/run/mysqld
+    owner: mysql
+    group: mysql
+    state: directory
+  when: need_to_install_mysql is failed
+
+- name: Add mysql logrotate rules and mysql config
+  become: yes
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - src: mysql-log-rotate
+      dest: /etc/rsyslog.d/mysql-log-rotate
+    - src: my.cnf
+      dest: /etc/my.cnf
+  when: need_to_install_mysql is failed
+  notify:
+    - Restart rsyslog service
+
+- name: Add mysql path to the system
+  become: yes
+  lineinfile:
+    path: /etc/environment
+    state: present
+    backrefs: yes
+    regexp: 'PATH=(["]*)((?!.*?{{ mysql_bin_path }}).*?)(["]*)$'
+    line: 'PATH=\1\2:{{ mysql_bin_path }}\3'
+  when: need_to_install_mysql is failed
+
+- name: Add mysql init script
+  become: yes
+  copy:
+    src: mysql.server
+    dest: /etc/init.d/mysql.server
+    owner: root
+    group: root
+    mode: 0744
+  when: need_to_install_mysql is failed
+
+- name: Add mysql init script to services
+  become: yes
+  command: update-rc.d -f mysql.server defaults
+  when: need_to_install_mysql is failed
+
+- name: Start mysql-server if it is not started
+  become: yes
+  service:
+    name: mysql
+    state: started
