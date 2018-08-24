@@ -129,6 +129,12 @@
   command: update-rc.d -f mysql.server defaults
   when: need_to_install_mysql is failed
 
+- name: Start mysql
+  become: yes
+  service:
+    name: mysql
+    state: started
+
 - name: Add mysql path to the system
   become: yes
   lineinfile:
@@ -149,9 +155,3 @@
     mode: 0644
     state: link
   when: need_to_install_mysql is failed
-
-- name: Start mysql
-  become: yes
-  service:
-    name: mysql
-    state: started
