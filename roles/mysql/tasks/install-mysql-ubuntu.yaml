@@ -155,3 +155,4 @@
   service:
     name: mysql
     state: started
+    enabled: yes
