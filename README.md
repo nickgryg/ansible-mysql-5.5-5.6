@@ -9,7 +9,7 @@ git clone https://github.com/nickgryg/ansible-mysql-5.5-5.6.git
 ```
 cd ansible-mysql-5.5-5.6
 ```
-3. Run ansible playbook
+3. Run ansible playbook test_role
 ```
-ansible-playbook playbook.yaml
+ansible-playbook test_role.yaml
 ```
