@@ -139,6 +139,17 @@
     line: 'PATH=\1\2:{{ mysql_bin_path }}\3'
   when: need_to_install_mysql is failed
 
+- name: Create symlink to mysql binary
+  become: yes
+  file:
+    src: /usr/local/mysql/bin/mysql
+    path: /usr/local/bin/mysql
+    owner: root
+    group: root
+    mode: 0644
+    state: link
+  when: need_to_install_mysql is failed
+
 - name: Start mysql-server if it is not started
   become: yes
   service:
