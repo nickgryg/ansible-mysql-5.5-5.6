@@ -150,7 +150,7 @@
     state: link
   when: need_to_install_mysql is failed
 
-- name: Start mysql-server if it is not started
+- name: Start mysql
   become: yes
   service:
     name: mysql

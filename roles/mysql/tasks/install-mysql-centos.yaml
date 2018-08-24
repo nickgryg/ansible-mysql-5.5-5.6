@@ -29,7 +29,7 @@
     name: mysql-server
     state: present
 
-- name: Start mysql-server if it is not started
+- name: Start mysqld
   become: yes
   service:
     name: mysqld
